@@ -1,119 +1,49 @@
-import React, { Component } from 'react';
-import Nav from './components/Nav';
-import SignupForm from './components/SignUpForm';
-import LoginForm from './components/LoginForm';
-import './App.css';
+import React from 'react';
+import PropTypes from 'prop-types';
 
-class App extends Component {
+class LoginForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      displayed_form: '',
-      logged_in: localStorage.getItem('token') ? true : false,
       username: '',
-      email: ''
+      password: ''
     };
   }
 
-  componentDidMount() {
-    if (this.state.logged_in) {
-      fetch('http://localhost:8000/projects/current_user/', {
-        headers: {
-          Authorization: `JWT ${localStorage.getItem('token')}`
-        }
-      })
-        .then(res => res.json())
-        .then(json => {
-          this.setState({
-            username: json.username,
-            email: json.email
-          });
-        });
-    }
-  }
-
-  handle_login = (e, data) => {
-    e.preventDefault();
-    fetch('http://localhost:8000/token-auth/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-      .then(res => res.json())
-      .then(json => {
-        localStorage.setItem('token', json.token);
-        this.setState({
-          logged_in: true,
-          displayed_form: '',
-          username: json.user.username,
-          email: json.user.email
-        });
-      });
-  };
-
-  handle_signup = (e, data) => {
-    e.preventDefault();
-    fetch('http://localhost:8000/projects/users/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-      .then(res => res.json())
-      .then(json => {
-        localStorage.setItem('token', json.token);
-        this.setState({
-          logged_in: true,
-          displayed_form: '',
-          username: json.username,
-          email: json.email
-        });
-      });
-  };
-
-  handle_logout = () => {
-    localStorage.removeItem('token');
-    this.setState({ logged_in: false, username: '' , email: ''});
-  };
-
-  display_form = form => {
+  handle_change = e => {
+    const name = e.target.name;
+    const value = e.target.value;
     this.setState({
-      displayed_form: form
+      [name]: value
     });
   };
 
   render() {
-    let form;
-    switch (this.state.displayed_form) {
-      case 'login':
-        form = <LoginForm handle_login={this.handle_login} />;
-        break;
-      case 'signup':
-        form = <SignupForm handle_signup={this.handle_signup} />;
-        break;
-      default:
-        form = null;
-    }
-
     return (
-      <div className="App">
-        <Nav
-          logged_in={this.state.logged_in}
-          display_form={this.display_form}
-          handle_logout={this.handle_logout}
+      <form onSubmit={e => this.props.handle_login(e, this.state)}>
+        <h4>Log In</h4>
+        <label htmlFor="username">Username</label>
+        <input
+          type="text"
+          name="username"
+          value={this.state.username}
+          onChange={this.handle_change}
         />
-        {form}
-        <h3>
-          {this.state.logged_in
-            ? `Hello, ${this.state.username},your email is,${this.state.email}`
-            : 'Please Log In'}
-        </h3>
-      </div>
+        <label htmlFor="password">Password</label>
+        <input
+          type="password"
+          name="password"
+          value={this.state.password}
+          onChange={this.handle_change}
+        />
+        <input type="submit" />
+      </form>
     );
   }
 }
 
-export default App;
+export default LoginForm;
+
+LoginForm.propTypes = {
+  handle_login: PropTypes.func.isRequired
+};
