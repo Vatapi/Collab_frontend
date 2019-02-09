@@ -3,6 +3,7 @@ import Nav from './components/Nav';
 import SignupForm from './components/SignUpForm';
 import LoginForm from './components/LoginForm';
 import './App.css';
+import SearchBar from './components/SearchBar';
 
 class App extends Component {
   constructor(props) {
@@ -11,7 +12,9 @@ class App extends Component {
       displayed_form: '',
       logged_in: localStorage.getItem('token') ? true : false,
       username: '',
-      email: ''
+      email: '',
+      projects: '',
+      yourprojects: '',
     };
   }
 
@@ -29,7 +32,43 @@ class App extends Component {
             email: json.email
           });
         });
-    }
+    };
+    fetch('http://localhost:8000/projects/views/' , {
+      method: 'GET'
+    })
+    .then(res => res.json())
+    .then(json => {
+      let title = '';
+      for (let i=0;i<json.length;i++) {
+        title += json[i].title + " ,";
+      }
+      this.setState({
+        projects: title,
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  }
+
+  my_projects = (data) => {
+    console.log(data)
+    fetch(`http://localhost:8000/projects/views/?search=${data}` , {
+      method: 'GET'
+    })
+    .then(res => res.json())
+    .then(json => {
+      let title = '';
+      for (let i=0;i<json.length;i++) {
+        title += json[i].title + " ,";
+      }
+      this.setState({
+        yourprojects: title,
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    });
   }
 
   handle_login = (e, data) => {
@@ -49,6 +88,8 @@ class App extends Component {
           displayed_form: '',
           username: json.user.username,
           email: json.user.email
+        }, () => {
+          this.my_projects(this.state.username);
         });
       });
   };
@@ -70,6 +111,8 @@ class App extends Component {
           displayed_form: '',
           username: json.username,
           email: json.email
+        }, () => {
+          this.my_projects(this.state.username);
         });
       });
   };
@@ -86,6 +129,33 @@ class App extends Component {
   display_form = form => {
     this.setState({
       displayed_form: form
+    });
+  };
+
+  handle_buttonclick = (e , data) => {
+    e.preventDefault();
+    let api_url;
+    if (data.search !== '') {
+      api_url = `http://localhost:8000/projects/views/?search=${data.search}`;
+    } else {
+      api_url = 'http://localhost:8000/projects/views/' ;
+    };
+    console.log(api_url);
+    fetch(api_url , {
+      method: 'GET'
+    })
+    .then(res => res.json())
+    .then(json => {
+      let title = '';
+      for (let i=0;i<json.length;i++) {
+        title += json[i].title + " ,";
+      }
+      this.setState({
+        projects: title,
+      });
+    })
+    .catch(error => {
+      console.log(error);
     });
   };
 
@@ -112,7 +182,21 @@ class App extends Component {
         {form}
         <h3>
           {this.state.logged_in
-            ? `Hello, ${this.state.username}, your email is, ${this.state.email}`
+            ?
+            <div>
+              <p>
+              Hello, {this.state.username}, your email is, {this.state.email} and the
+              projects are {this.state.projects }
+              </p>
+              <br/>
+              <p>**** LEFT HAND SIDE ****</p>
+              <br/>
+              <p>
+              your projects are {this.state.yourprojects}
+              </p>
+              <br/>
+              <SearchBar handle_buttonclick={this.handle_buttonclick} />
+            </div>
             : 'Please Log In'}
         </h3>
       </div>
